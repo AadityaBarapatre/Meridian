@@ -21,6 +21,7 @@
 ![Order Matching](https://img.shields.io/badge/Matching%20Speed-Sub--Millisecond-6C5CE7?style=flat-square)
 ![Automated Tests](https://img.shields.io/badge/Automated%20Tests-16%20Passing-0984E3?style=flat-square)
 ![Paper Capital](https://img.shields.io/badge/Simulated%20Balance-$100%2C000%20USD-FDCB6E?style=flat-square)
+![Contributors](https://img.shields.io/badge/Contributors-2-6C5CE7?style=flat-square)
 ![Status](https://img.shields.io/badge/Runs-Locally-636E72?style=flat-square)
 
 **[The Idea](#-the-idea)** · **[Architecture](#-architecture)** · **[Features](#-features)** · **[Screenshots](#-screenshots)** · **[DSA Deep Dive](#-dsa-deep-dive)** · **[Tech Stack](#-tech-stack)** · **[Quick Start](#-quick-start-windows)** · **[API Reference](#-api-reference)** · **[Evaluators](#-for-evaluators-where-to-look)**
@@ -670,11 +671,17 @@ No. The candlestick chart in `src/components/CandleChart.tsx` is built completel
 
 ---
 
-## 👥 Authors & Credits
+## 👥 Authors & Contributors
 
 <div align="center">
 
-**Aaditya Barapatre**  
+| # | Contributor | GitHub Profile | Role |
+|:--:|---|:---:|---|
+| 1 | **Aaditya Barapatre** | [@AadityaBarapatre](https://github.com/AadityaBarapatre) | Architecture, Documentation & Maintainer |
+| 2 | **Sebastian** | [@sebastian2006-dev](https://github.com/sebastian2006-dev) | Core Matching Engine & Simulator Contributor |
+
+<br>
+
 Developed for **Data Structures & Algorithms (24EE05TH0505 – 2)**  
 B. Tech. Electronics & Communication Engineering
 
