@@ -1,645 +1,697 @@
-# Meridian — Low-Latency Order Matching Engine & Paper Trading Terminal
+<div align="center">
 
-> **Course:** Data Structures and Algorithms  
-> **Course Code:** 24EE05TH0505 – 2 (Program Elective – 1)  
-> **Target Audience:** Semester V, B. Tech. (Electronics and Communication Engineering)  
-> **Academic Focus:** Practical Application of Linear, Non-Linear, Hashing, and Advanced Data Structures  
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0984E3,100:00CEC9&height=220&section=header&text=Meridian&fontSize=64&fontColor=ffffff&animation=fadeIn&desc=Low-Latency%20Order%20Matching%20Engine%20%26%20Paper%20Trading%20Terminal&descSize=18&descAlignY=68" alt="Meridian banner" width="100%">
 
----
+<a href="https://github.com/AadityaBarapatre/Meridian">
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&duration=3000&pause=1000&color=0984E3&center=true&vCenter=true&width=780&lines=Handcrafted+DSA+Core%3A+Treap+(BST+%2B+Heap)+%7C+Doubly-LL;O(1)+Order+Cancellations+%7C+O(log+P)+Depth+Rebalancing;Bounded+Circular+Ring+Buffer+%7C+O(K)+Trie+Autocomplete;Dual-Runtime+Parity%3A+Python+3+(FastAPI)+%26+TypeScript+(Node.js)" alt="Meridian typing animation">
+</a>
 
-## 1. Abstract
+<br>
 
-**Meridian** is a high-performance, full-stack electronic order matching engine and paper trading terminal developed to demonstrate the critical role of fundamental Data Structures and Algorithms (DSA) in low-latency financial systems. Built entirely without external third-party data structure libraries, the matching core is handcrafted from first principles using **Self-Balancing Binary Search Trees (Treaps)**, **Doubly Linked Lists**, **Hash Tables**, **Circular Queues (Ring Buffers)**, and **Tries (Prefix Trees)**.
+![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-REST%20%26%20WS-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=for-the-badge&logo=node.js&logoColor=white)
+![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![Vite](https://img.shields.io/badge/Vite-Build%20Tool-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+![HTML5 Canvas](https://img.shields.io/badge/HTML5-Canvas%20Charts-E34F26?style=for-the-badge&logo=html5&logoColor=white)
+![Electron](https://img.shields.io/badge/Electron-Desktop%20App-47848F?style=for-the-badge&logo=electron&logoColor=white)
 
-Meridian provides a **dual-runtime matching engine** implemented with complete architectural parity in both:
-1. **Python 3 (FastAPI + Uvicorn + WebSockets):** Idiomatic, typed Python backend leveraging `__slots__` for high-throughput memory layout and asynchronous concurrency.
-2. **TypeScript / Node.js (Express + ws):** Strongly-typed, event-driven JavaScript engine running on the V8 engine.
+![DSA Core](https://img.shields.io/badge/DSA%20Core-Zero%20External%20Libraries-00B894?style=flat-square)
+![Order Matching](https://img.shields.io/badge/Matching%20Speed-Sub--Millisecond-6C5CE7?style=flat-square)
+![Automated Tests](https://img.shields.io/badge/Automated%20Tests-16%20Passing-0984E3?style=flat-square)
+![Paper Capital](https://img.shields.io/badge/Simulated%20Balance-$100%2C000%20USD-FDCB6E?style=flat-square)
+![Status](https://img.shields.io/badge/Runs-Locally-636E72?style=flat-square)
 
-The system simulates a live multi-asset exchange where 8 equity symbols execute continuous two-sided order flow driven by an Ornstein–Uhlenbeck stochastic price process. The backend exposes both REST API endpoints and a real-time WebSocket pub/sub stream, powering a responsive glassmorphic web and desktop terminal equipped with canvas-rendered candlestick charts, live Level-2 order books, and real-time mark-to-market portfolio accounting. 
+**[The Idea](#-the-idea)** · **[Architecture](#-architecture)** · **[Features](#-features)** · **[Screenshots](#-screenshots)** · **[DSA Deep Dive](#-dsa-deep-dive)** · **[Tech Stack](#-tech-stack)** · **[Quick Start](#-quick-start-windows)** · **[API Reference](#-api-reference)** · **[Evaluators](#-for-evaluators-where-to-look)**
 
-By grounding every architectural decision in formal time and space complexity budgets, Meridian proves how theoretical computer science directly solves industrial throughput and latency challenges across both Python and TypeScript runtimes.
-
----
-
-## 2. Problem Statement
-
-Electronic financial exchanges and algorithmic trading systems process tens of thousands of bid/ask quotes and market orders per second under strict microsecond Service Level Agreements (SLAs). In such high-frequency trading (HFT) environments, naive implementations introduce fatal performance bottlenecks:
-
-1. **Linear Search Bottleneck ($O(N)$):** Storing limit orders in unsorted arrays or flat linked lists requires an $O(N)$ linear traversal across all resting orders to find best prices or locate orders for execution.
-2. **The Sorting Penalty ($O(N \log N)$):** Re-sorting the order book on every incoming order, tick update, or cancellation introduces an unacceptable $O(N \log N)$ computational overhead.
-3. **Inefficient Order Cancellations ($O(N)$):** In modern exchanges, over 90% of submitted orders are cancelled before execution. Searching through linear structures to delete an order degrades throughput during market volatility.
-4. **Memory Churn & Garbage Collection Spikes:** Unbounded dynamic allocations for high-frequency time & sales tapes trigger continuous heap fragmentation and unpredictable runtime Garbage Collection (GC) pauses, destroying deterministic latency guarantees.
-5. **Floating-Point Drift:** Representing monetary assets in IEEE-754 double-precision floating-point numbers produces binary rounding errors that accumulate across millions of fractional trade settlements.
+</div>
 
 ---
 
-## 3. Objectives
+## 💡 The Idea
 
-- **Handcraft Core DSA:** Implement self-balancing trees, doubly linked queues, circular buffers, hash tables, and tries from scratch without external libraries.
-- **Achieve Optimal Asymptotic Bounds:** Attain $O(1)$ order cancellations, $O(\log P)$ price-level insertions, $O(K)$ ticker autocompletions, and bounded $O(1)$ tape logging.
-- **Enforce Price-Time Priority:** Ensure strictly fair execution where more competitive prices match first, and identical prices match First-In, First-Out (FIFO).
-- **Prevent Memory Fragmentation:** Utilize fixed-capacity circular ring buffers to maintain a strictly bounded memory footprint for real-time market data.
-- **Ensure Financial Precision:** Eliminate floating-point roundoff hazards by enforcing pure integer cent arithmetic throughout the matching pipeline.
-- **Demonstrate Full-Stack Real-Time Architecture:** Connect the low-latency TypeScript engine to a responsive financial UI via WebSockets.
-- **Verify Invariants via Automated Tests:** Provide a comprehensive unit test suite validating all data structure behaviors, boundary conditions, and priority invariants.
+An electronic financial exchange processes tens of thousands of bids, asks, cancellations, and trades every second under microsecond Service Level Agreements (SLAs). In high-frequency trading (HFT), naive data structures (arrays or flat linked lists) fail completely: finding best prices takes $O(N)$, cancellations degrade under linear scans, and frequent memory allocations trigger catastrophic Garbage Collection (GC) latency spikes.
 
----
+**Meridian** solves these real-world exchange engineering challenges from first principles. Built with **zero third-party data structure libraries**, every component is handcrafted across a **dual-runtime matching engine** featuring complete architectural parity in both **Python 3 (FastAPI)** and **TypeScript (Node.js)**.
 
-## 4. Scope
+| In the Financial Exchange | Real-World Challenge | Handcrafted Data Structure / Algorithm | Asymptotic Efficiency | Where in Code |
+|---|---|---|:---:|---|
+| **Price Priority** | Highest bids & lowest asks must execute first | **Treap (Cartesian Tree: BST + Max-Heap)** | $O(\log P)$ | `PriceTree` (`engine.py` / `engine.ts`) |
+| **Time Priority** | Orders at the same price execute First-In, First-Out (FIFO) | **Doubly Linked List** | $O(1)$ enqueue / dequeue | `PriceLevel` (`engine.py` / `engine.ts`) |
+| **Instant Order Cancellation** | 90%+ of orders get cancelled before fill; cannot scan $O(N)$ | **Global Hash Index + $O(1)$ Pointer Unlink** | $O(1)$ arbitrary cancel | `Engine.index` + `lv.unlink()` |
+| **Real-Time Trade Tape** | Live execution stream without memory leaks or GC churn | **Circular Queue (Bounded Ring Buffer)** | $O(1)$ wrap-around write | `CircularQueue` (`engine.py` / `engine.ts`) |
+| **Ticker Search Autocomplete** | Instant multi-asset search as the user types symbol prefixes | **Trie (Prefix Tree) + Recursive DFS** | $O(K)$ ($K$ = prefix len) | `Trie` (`engine.py` / `engine.ts`) |
+| **L2 Order Book Ladder** | Depth ladder must be rendered without $O(N \log N)$ sorting | **In-Order & Reverse In-Order Tree Traversal** | $O(D)$ ($D$ = depth levels) | `PriceTree.top()` |
+| **Financial Settlement** | Binary IEEE-754 floating-point drift destroys balances | **Scaled Integer Cent Arithmetic** | Exact integer cents | Throughout engine (`round(P * 100)`) |
 
-Meridian is developed as an advanced academic project and educational demonstration platform for B.Tech ECE Semester V. 
-- **In Scope:** In-memory deterministic order matching, stochastic market simulation, paper trading portfolio management, technical charting, and local desktop execution.
-- **Out Scope:** Direct connections to real-world brokerage APIs, processing real fiat/crypto currency, multi-node distributed consensus (e.g., Raft), or SEC/FINRA regulatory compliance. All market data and funds ($100,000 starting cash) are entirely simulated.
-
----
-
-## 5. Hardware and Software Requirements
-
-### Hardware
-- **Processor:** 64-bit multi-core CPU (Intel Core i3 / AMD Ryzen 3 or higher)
-- **RAM:** 4 GB minimum (8 GB recommended for simultaneous dev server and Electron instance)
-- **Storage:** 500 MB free disk space
-- **Display:** 1366 × 768 minimum resolution (1920 × 1080 recommended for multi-pane trading layout)
-
-### Software
-- **Operating System:** Windows 10/11, macOS, or Linux
-- **Runtime Environments:**
-  - **Node.js:** v18.0.0 or higher & **npm:** v9.0.0 or higher
-  - **Python:** v3.10 or higher
-- **Primary Languages:** Python 3, TypeScript, Modern JavaScript
-- **Shell / Terminal:** PowerShell, Command Prompt, or Bash
+> [!NOTE]
+> Meridian is an academic order matching engine and paper trading simulator designed for **Course Code: 24EE05TH0505 – 2 (Data Structures and Algorithms)**. It runs entirely on your local machine with $100,000 in simulated demo capital. No real financial broker or actual currency is connected.
 
 ---
 
-## 6. Technologies Used
+## 🧩 Architecture
 
-| Technology | Layer | Purpose |
+Meridian features a clean decoupled architecture separating client rendering, dual backend servers, and the algorithmic matching core:
+
+```mermaid
+flowchart LR
+    subgraph Client ["🖥️ Client Layer"]
+        A["React 18 Terminal<br/>Vite · Electron"]
+        C["Canvas Charts<br/>GPU-Accelerated OHLCV"]
+    end
+
+    subgraph Transport ["⚡ Real-Time Transport"]
+        WS["WebSocket Stream<br/>/ws (250ms ticks)"]
+        REST["HTTP REST API<br/>/api/orders · /api/candles"]
+    end
+
+    subgraph DualCore ["⚙️ Dual-Runtime Server Layer (Interchangeable)"]
+        direction TB
+        PY["🐍 Python Server (FastAPI + Uvicorn)<br/>python_server/server.py"]
+        TS["🟦 TypeScript Server (Node.js + Express)<br/>server/server.ts"]
+    end
+
+    subgraph Engine ["🧠 Handcrafted DSA Matching Core (Zero Libs)"]
+        TR["🌳 Treap (Price Tree)<br/>O(log P) BST + Heap"]
+        DLL["🔗 Doubly-LL (Price Level)<br/>O(1) FIFO Queue & Unlink"]
+        CQ["🔄 Circular Queue<br/>O(1) Ring Buffer Tape"]
+        TRIE["🌲 Trie (Prefix Tree)<br/>O(K) Autocomplete"]
+        IDX["🗝️ Hash Index<br/>O(1) Order Lookup"]
+    end
+
+    A --> REST & WS
+    C --> A
+    REST & WS --> PY
+    REST & WS --> TS
+    PY & TS --> Engine
+    TR <--> DLL
+    IDX --> DLL
+```
+
+### Order Placement & Execution Lifecycle
+
+```mermaid
+sequenceDiagram
+    actor Trader as 👤 User / Sim Agent
+    participant UI as Terminal UI (React + Canvas)
+    participant API as Backend (FastAPI / Express)
+    participant Eng as Matching Engine (engine.py / .ts)
+    participant Treap as PriceTree (Treap)
+    participant Queue as PriceLevel (Doubly-LL)
+    participant Tape as TradeTape (CircularQueue)
+
+    Trader->>UI: Place Limit Buy (e.g. 50 AAPL @ $185.00)
+    UI->>API: POST /api/orders { symbol, side, type, price, qty }
+    API->>Eng: engine.submit(order)
+    Eng->>Treap: Check opposite book (asks.best()) in O(log P)
+    alt Crossed Spread (P_buy >= P_best_ask)
+        Eng->>Queue: Match with oldest order at level.head in O(1)
+        Eng->>Tape: Append executed trade record in O(1)
+        Eng->>API: Broadcast trade & depth updates via WebSocket
+    else Spread Not Crossed (Resting Order)
+        Eng->>Treap: Find or insert PriceLevel in O(log P)
+        Eng->>Queue: Append order to tail in O(1)
+        Eng->>Eng: Save order pointer into global Hash Index
+    end
+    API-->>UI: 200 OK with order receipt
+    API-->>UI: WebSocket broadcast (250ms L2 depth snapshot)
+    UI-->>Trader: UI order book & chart refresh instantly
+```
+
+### Order State Transitions
+
+```mermaid
+stateDiagram-v2
+    [*] --> Submitted: POST /api/orders
+    Submitted --> Resting: Price does not cross spread (Enqueued in Doubly-LL)
+    Submitted --> Filled: Immediate match against opposite Treap best
+    Resting --> PartiallyFilled: Partial execution against incoming order
+    PartiallyFilled --> Filled: Complete execution
+    Resting --> Cancelled: DELETE /api/orders/:id (O(1) Pointer Unlink)
+    Filled --> [*]
+    Cancelled --> [*]
+```
+
+---
+
+## ✨ Features
+
+<table>
+  <tr>
+    <td width="33%" valign="top">
+      <h3>⚡ Microsecond Matching</h3>
+      Deterministic Price-Time priority matching engine with support for both <b>LIMIT</b> and <b>MARKET</b> orders.
+    </td>
+    <td width="33%" valign="top">
+      <h3>🌳 Treap Order Book</h3>
+      Self-Balancing Cartesian Tree (BST + Heap) maintaining continuous <b>Level-2 depth</b> without $O(N \log N)$ re-sorting.
+    </td>
+    <td width="33%" valign="top">
+      <h3>📈 Canvas Candlestick Chart</h3>
+      High-performance GPU-accelerated HTML5 Canvas rendering <b>480 historical candles</b>, 20-EMA, volume bars, and crosshair.
+    </td>
+  </tr>
+  <tr>
+    <td width="33%" valign="top">
+      <h3>🔄 Bounded Trade Tape</h3>
+      Fixed-capacity <b>Circular Ring Buffer (1,000 entries)</b> with dynamic buy/sell flow pressure meter and zero GC churn.
+    </td>
+    <td width="33%" valign="top">
+      <h3>💼 Paper Portfolio Manager</h3>
+      <b>$100,000 starting cash</b>, margin reservation on resting limit buys, realized/unrealized P&L, and asset allocation breakdown.
+    </td>
+    <td width="33%" valign="top">
+      <h3>🔍 Trie Symbol Search</h3>
+      Handcrafted <b>Prefix Tree with recursive DFS</b> delivering sub-millisecond symbol autocompletion across 8 equity tickers.
+    </td>
+  </tr>
+  <tr>
+    <td width="33%" valign="top">
+      <h3>🔁 Dual-Runtime Parity</h3>
+      Identical architecture implemented in both <b>Python 3 (FastAPI)</b> and <b>TypeScript (Node.js)</b> for benchmarking.
+    </td>
+    <td width="33%" valign="top">
+      <h3>🎲 Stochastic Simulation</h3>
+      Continuous <b>Ornstein–Uhlenbeck</b> stochastic price process with volatility shocks and automated depth replenishment.
+    </td>
+    <td width="33%" valign="top">
+      <h3>🧪 Automated Verification</h3>
+      <b>16 automated unit tests</b> asserting algorithmic correctness, priority invariants, edge-case rejection, and buffer wrapping.
+    </td>
+  </tr>
+</table>
+
+> [!WARNING]
+> **Trading and portfolio balances are strictly simulated.** Account balances ($100,000 paper cash) and simulated market participants exist exclusively for educational testing.
+
+---
+
+## 📸 Screenshots
+
+<table>
+  <tr>
+    <td width="50%" valign="top" align="center">
+      <b>📊 High-Speed Trading Terminal (Dark Glassmorphic UI)</b><br><br>
+      <img src="screenshots/terminal.png" alt="Meridian Trading Terminal" width="100%"><br>
+      <sub>Level-2 order book, Canvas candlestick chart, active order entry, and live trade tape</sub>
+    </td>
+    <td width="50%" valign="top" align="center">
+      <b>💼 Paper Portfolio & Account Analytics</b><br><br>
+      <img src="screenshots/portfolio.png" alt="Meridian Portfolio Dashboard" width="100%"><br>
+      <sub>Real-time mark-to-market valuations, realized/unrealized P&L, and equity distribution</sub>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" valign="top" align="center">
+      <b>📈 Interactive Technical Candlestick Inspection (15-Minute View)</b><br><br>
+      <img src="screenshots/terminal-15m.png" alt="Meridian 15-Minute Candlestick Chart" width="100%"><br>
+      <sub>Multi-timeframe candlestick generation with 20-period Exponential Moving Average (EMA) and volume profile</sub>
+    </td>
+  </tr>
+</table>
+
+---
+
+## 🧠 DSA Deep Dive
+
+Every data structure in Meridian is implemented from scratch with **zero third-party imports** in both [`python_server/engine.py`](python_server/engine.py) and [`server/engine.ts`](server/engine.ts).
+
+### 1. Treap (Self-Balancing BST + Heap): Level-2 Price Tree
+
+A **Treap** (Cartesian Tree) marries a Binary Search Tree with a Binary Max-Heap:
+- **BST Invariant:** Sorted by price key $k$ (in integer cents). For any node, $\text{left.price} < \text{node.price} < \text{right.price}$.
+- **Heap Invariant:** Each node is assigned a pseudo-random priority $p \in [0, 1)$. A parent's priority is always greater than its children ($\text{parent.priority} > \text{child.priority}$).
+- **Rotation-Free Balancing:** Rebalanced cleanly via functional `split(t, k)` and `merge(a, b)` primitives, guaranteeing $O(\log P)$ height even with monotonically increasing prices.
+
+```text
+               [Price: $185.00 | Priority: 0.94]
+                       /               \
+        [Price: $184.50 | 0.81]     [Price: $185.50 | 0.72]
+               /                               \
+    [Price: $184.00 | 0.43]                 [Price: $186.00 | 0.65]
+```
+<sub>Ascending in-order traversal yields asks ($185.00, $185.50, $186.00); descending in-order traversal yields bids.</sub>
+
+### 2. Doubly Linked List: Strict FIFO Queue & $O(1)$ Cancellation
+
+Each price node references a `PriceLevel` containing a doubly linked list of resting orders:
+
+```text
+            HEAD (oldest order, matches first)                 TAIL (newest order)
+                   ┌───────────┐      ┌───────────┐      ┌───────────┐
+      NULL  ◄───── │ Order #1  │ ◄─── │ Order #2  │ ◄─── │ Order #3  │ ◄───── NULL
+            ──────►│ Qty: 100  │ ───► │ Qty: 50   │ ───► │ Qty: 200  │ ──────
+                   └───────────┘      └───────────┘      └───────────┘
+                         │
+                         ▼
+             O(1) Cancellation via Direct Pointer Unlinking:
+             node.prev.next = node.next; node.next.prev = node.prev;
+```
+
+When an order cancellation arrives, the engine accesses the `OrderNode` directly in $O(1)$ via the global hash table and calls `level.unlink(order)` in $O(1)$ time, eliminating the traditional $O(N)$ queue search.
+
+### 3. Circular Queue: Fixed-Capacity Bounded Ring Buffer
+
+The trade execution tape uses a circular ring buffer ($C = 1,000$) with a moving `head` pointer and modulo arithmetic `(head + size) % capacity`:
+
+```text
+               Index:    0       1       2       3       4       5       6       7
+                      ┌───────┬───────┬───────┬───────┬───────┬───────┬───────┬───────┐
+                      │ Trade │ Trade │ Trade │ Trade │ Trade │  ...  │ Trade │ Trade │
+                      │  #998 │  #999 │ #1000 │ #1001 │ #1002 │       │  #996 │  #997 │
+                      └───────┴───────┴───────┴───────┴───────┴───────┴───────┴───────┘
+                                                  ▲                       ▲
+                                                  │                       │
+                                           HEAD (oldest)             TAIL (newest)
+```
+
+Appending runs in $O(1)$ time. When capacity is exceeded, the oldest trade is overwritten automatically, guaranteeing a strictly bounded memory footprint and completely eliminating Garbage Collection pauses.
+
+### 4. Trie (Prefix Tree): Sub-Millisecond Ticker Autocomplete
+
+A handcrafted Trie indexes all tradable ticker symbols (`AAPL`, `AMZN`, `GOOGL`, `MSFT`, `NVDA`, `TSLA`, `META`, `BRK.B`):
+
+```text
+                                (ROOT)
+                               /   |   \
+                             'A'  'M'  'G'
+                             /      \    \
+                           'A'      'S'  'O'
+                           /          \    \
+                         'P'          'F'  'O'
+                         /              \    \
+                      'L' [AAPL]        'T' [MSFT] 'G'
+                                                     \
+                                                     'L' [GOOGL]
+```
+
+Tracing the prefix takes $O(K)$ steps (where $K$ is string length). Descendants are traversed via recursive Depth-First Search (DFS) to return matching symbols instantaneously.
+
+### ⏱️ Asymptotic Complexity Analysis
+
+| Operation | Data Structure | Best Case | Average Case | Worst Case | Space Complexity |
+|---|---|:---:|:---:|:---:|:---:|
+| **Best Bid / Ask Lookup** | Treap (`PriceTree.best()`) | $O(1)$ | $O(\log P)$ | $O(\log P)$ | $O(P)$ |
+| **Price Level Insert / Delete** | Treap (`split()` & `merge()`) | $O(1)$ | $O(\log P)$ | $O(\log P)$ | $O(1)$ auxiliary |
+| **Level-2 Depth Ladder** | Treap In-Order Traversal | $O(D)$ | $O(D)$ | $O(D)$ | $O(D)$ output |
+| **FIFO Order Enqueue / Dequeue** | Doubly Linked List (`PriceLevel`) | $O(1)$ | $O(1)$ | $O(1)$ | $O(1)$ per node |
+| **Order Cancellation** | Hash Index + Pointer Unlink | $O(1)$ | $O(1)$ | $O(1)$ | $O(1)$ |
+| **Trade Tape Logging** | Circular Ring Buffer | $O(1)$ | $O(1)$ | $O(1)$ | $O(C)$ strictly bounded |
+| **Ticker Search Autocomplete** | Trie + Recursive DFS | $O(K)$ | $O(K + M)$ | $O(K + M)$ | $O(\Sigma \cdot \text{len})$ |
+
+<details>
+<summary><b>🧪 Automated Test Suite Output (16 Passing Tests in &lt; 0.6s)</b></summary>
+
+```text
+test_cancelled_order (python_server.tests.test_engine.TestEngine.test_cancelled_order) ... ok
+test_circular_queue (python_server.tests.test_engine.TestEngine.test_circular_queue) ... ok
+test_market_order_sweep (python_server.tests.test_engine.TestEngine.test_market_order_sweep) ... ok
+test_partial_fill (python_server.tests.test_engine.TestEngine.test_partial_fill) ... ok
+test_price_priority (python_server.tests.test_engine.TestEngine.test_price_priority) ... ok
+test_time_priority (python_server.tests.test_engine.TestEngine.test_time_priority) ... ok
+test_trie_search (python_server.tests.test_engine.TestEngine.test_trie_search) ... ok
+test_validation (python_server.tests.test_engine.TestEngine.test_validation) ... ok
+test_candles_history (python_server.tests.test_market.TestMarketAndPortfolio.test_candles_history) ... ok
+test_live_ticks_consistent (python_server.tests.test_market.TestMarketAndPortfolio.test_live_ticks_consistent) ... ok
+test_market_trades_both_sides (python_server.tests.test_market.TestMarketAndPortfolio.test_market_trades_both_sides) ... ok
+test_portfolio_insufficient_buying_power (python_server.tests.test_market.TestMarketAndPortfolio.test_portfolio_insufficient_buying_power) ... ok
+test_portfolio_limit_buy_reservation (python_server.tests.test_market.TestMarketAndPortfolio.test_portfolio_limit_buy_reservation) ... ok
+test_portfolio_market_buy (python_server.tests.test_market.TestMarketAndPortfolio.test_portfolio_market_buy) ... ok
+test_portfolio_resting_orders_book_maker_fills (python_server.tests.test_market.TestMarketAndPortfolio.test_portfolio_resting_orders_book_maker_fills) ... ok
+test_portfolio_sells_and_reject_oversell (python_server.tests.test_market.TestMarketAndPortfolio.test_portfolio_sells_and_reject_oversell) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.416s
+
+OK
+```
+
+</details>
+
+---
+
+## 🧰 Tech Stack
+
+| Layer | Technology | Key Responsibility |
 |---|---|---|
-| **Python 3** | Dual Core Engine | Typed Python implementation of Treap, Doubly-LL, CircularQueue, and Trie (`python_server/`) |
-| **FastAPI** | Python REST API | High-performance asynchronous REST endpoints for bootstrap, candles, and orders |
-| **Uvicorn** | ASGI Server | Lightning-fast asynchronous server running the 250 ms live market event loop |
-| **WebSockets (Python & JS)**| Real-Time Networking | Streaming 250 ms market ticks, L2 depth snapshots, and trade executions |
-| **TypeScript** | Dual Core Engine | Strongly typed data structure definitions and matching engine (`server/`) |
-| **Node.js + Express** | TypeScript Backend | Node.js runtime and REST API service |
-| **React 18 + Vite** | Frontend Terminal | High-speed glassmorphic terminal, dynamic state orchestration, and HMR |
-| **HTML5 Canvas API** | Financial Visualization | Dependency-free, GPU-accelerated rendering of 480-candle charts, EMAs, and crosshairs |
-| **Electron** | Desktop Packaging | Native cross-platform container bundling backend services and client interface |
-| **unittest & tsx** | Testing Pipelines | Automated test suites asserting identical DSA invariants in both Python and TypeScript |
+| **DSA Engine (Python)** | **Python 3.10+ (with `__slots__`)** | Pure handcrafted Treap, Doubly-LL, CircularQueue, Trie in `python_server/engine.py` |
+| **Backend REST & WS (Python)** | **FastAPI + Uvicorn** | Asynchronous HTTP endpoints and 250ms WebSocket market broadcast in `python_server/server.py` |
+| **DSA Engine (TypeScript)** | **TypeScript 5.0+** | Strongly-typed matching engine with exact algorithmic parity in `server/engine.ts` |
+| **Backend REST & WS (TypeScript)**| **Node.js + Express + ws** | Event-driven backend service in `server/server.ts` |
+| **Frontend Terminal** | **React 18 + Vite** | Component hierarchy, glassmorphic layout, dynamic state, and sub-millisecond HMR |
+| **Financial Visualization** | **HTML5 Canvas API** | Dependency-free, hardware-accelerated rendering of 480 candlesticks and indicators |
+| **Desktop Container** | **Electron** | Cross-platform desktop application packaging |
+| **Automated Testing** | **Python `unittest` & Node `tsx`** | Formal invariant assertion suites for both engine runtimes |
 
 ---
 
-## 7. Features
+## 🚀 Quick Start (Windows)
 
-- **Microsecond-Grade Matching Core:** Executes Limit and Market orders with strict Price-Time priority.
-- **Continuous Stochastic Simulation:** 8 equity tickers driven by an Ornstein–Uhlenbeck mean-reverting drift process with volatility shocks and two-sided depth replenishment.
-- **Level-2 (L2) Real-Time Order Book:** Live display of top 15 bids and asks with aggregated volume bars.
-- **Interactive Technical Candlestick Chart:** Native canvas-rendered 8-hour historical tape (1-minute OHLCV), live candle formation, 20-period EMA, volume profile, crosshair price inspection, and scroll-to-zoom.
-- **Time & Sales Feed:** Live trade execution tape backed by a circular queue with an integrated real-time buy/sell pressure flow meter.
-- **Comprehensive Paper Account:** $100,000 starting balance, buying power margin reservation on limit orders, realized/unrealized P&L calculations, and asset allocation breakdown.
-- **Ticker Autocomplete:** $O(K)$ prefix search powered by a Trie for rapid symbol switching.
-- **Automated Verification:** 16 unit tests asserting core algorithmic correctness, priority sorting, edge-case rejection, and memory wrapping.
+All commands are run from the project root in **Windows PowerShell**.
 
----
+**Prerequisites:** Git · Python 3.10+ · Node.js 18+ (with npm) · Modern Web Browser.
 
-## 8. DSA Concepts & Syllabus Alignment
+### 1️⃣ Clone the Repository
 
-This project directly aligns with the syllabus for **Course Code: 24EE05TH0505 – 2 (Data Structures and Algorithms)** across all five prescribed instructional units:
-
-```
-                                    COURSE SYLLABUS MAPPING
-                                      (24EE05TH0505 – 2)
-                                              │
-         ┌──────────────────┬─────────────────┼─────────────────┬──────────────────┐
-         │                  │                 │                 │                  │
-       UNIT-I            UNIT-II           UNIT-III          UNIT-IV            UNIT-V
-  Linear Structures       Trees           Traversals    Hashing & Sorting  Advanced Structures
-  ┌───────────────┐ ┌───────────────┐ ┌───────────────┐ ┌───────────────┐ ┌────────────────┐
-  │• Doubly-LL    │ │• Treap (BST + │ │• Depth-First  │ │• Hash Tables  │ │• Trie (Prefix  │
-  │  (PriceLevel) │ │  Heap Rotat.) │ │  Search (DFS) │ │  (Order Index)│ │  Tree Index)   │
-  │• Circular     │ │• In-Order     │ │  in Trie      │ │• Exact Binary │ │• Tradeoff &    │
-  │  Queue Buffer │ │  Traversals   │ │• Network      │ │  Search Tree  │ │  Data Structure│
-  │• FIFO Priority│ │• Split & Merge│ │  Topology &   │ │  Lookups      │ │  Design        │
-  │  Queuing      │ │  Rebalancing  │ │  Fan-Out      │ │• Cent Hashing │ │  Evaluation    │
-  └───────────────┘ └───────────────┘ └───────────────┘ └───────────────┘ └────────────────┘
-```
-
-### Course Outcomes (CO) Addressed
-
-| Course Outcome | Academic Competency | Practical Implementation in Meridian |
-|---|---|---|
-| **CO-1** | Analyze algorithm efficiency by evaluating time and space complexities | Detailed Big-$O$ mathematical proofs for all engine operations ($O(1)$ unlinking, $O(\log P)$ tree rebalancing, $O(K)$ Trie operations). |
-| **CO-2** | Design solutions using linear data structures (stacks & queues) | Custom FIFO queue (`PriceLevel`), Ring Buffer trade tape (`CircularQueue`), and order matching FIFO queues. |
-| **CO-3** | Implement real-life problems using arrays & linked lists with dynamic memory allocation | Doubly linked node management (`OrderNode`) with bidirectional pointer updates (`prev`, `next`, `level`) enabling $O(1)$ cancellation without array compaction. |
-| **CO-4** | Demonstrate nonlinear data structures and operations (trees and graphs) | Self-Balancing Binary Search Tree (`PriceTree` Treap) with split/merge tree rotations, In-Order traversals, and Trie prefix tree with recursive DFS. |
-| **CO-5** | Apply searching, sorting, and hashing techniques for efficient data retrieval | Hash Map indexing (`Engine.index`), $O(\log P)$ BST search, In-Order depth sorting ($O(N)$ vs $O(N \log N)$ array sort), and integer hash keys. |
-
----
-
-### Detailed Unit-by-Unit Implementation Breakdown
-
-### Unit-I: Linear Data Structures and Applications
-- **Doubly Linked List (`PriceLevel`):**
-  - **Syllabus Topic:** *Linked lists, operations, dynamic memory management, complexity analysis.*
-  - **Files:** `python_server/engine.py` & `server/engine.ts` (`PriceLevel`, `OrderNode`)
-  - **Details:** Each price level maintains a doubly linked list of resting orders with explicit `head`, `tail`, `prev`, and `next` pointers. This structure provides two essential guarantees:
-    1. **Strict FIFO Time-Priority:** New orders append to `tail` in $O(1)$; matches execute from `head` in $O(1)$.
-    2. **$O(1)$ Arbitrary Cancellation:** When an order is cancelled, calling `lv.unlink(order)` adjusts adjacent pointers in $O(1)$ time without requiring a linear search through the queue.
-- **Circular Queue (`CircularQueue<T>`):**
-  - **Syllabus Topic:** *Circular Queue applications, implementation using arrays.*
-  - **Files:** `python_server/engine.py` & `server/engine.ts` (`CircularQueue`)
-  - **Details:** Uses a fixed-capacity buffer ($C = 1,000$) with a dynamic `head` pointer and modulo arithmetic `(head + size) % cap`. It stores execution records with constant-time $O(1)$ appending. When capacity is reached, it overwrites the oldest trade seamlessly, eliminating memory leaks and GC latency spikes.
-
-### Unit-II: Trees and Tree-Based Data Structures
-- **Self-Balancing Binary Search Tree (`PriceTree` Treap):**
-  - **Syllabus Topic:** *Binary Search Tree (BST), operations, self-balancing search trees, tree rotations.*
-  - **Files:** `python_server/engine.py` & `server/engine.ts` (`PriceTree`, `TNode`)
-  - **Details:** A Treap (Cartesian Tree + Heap) combines BST and binary heap properties:
-    - **BST Invariant:** Sorted on key $k$ (price in integer cents). For any node, all left descendants have smaller prices and right descendants have larger prices.
-    - **Heap Invariant:** Each node is assigned a random priority $p \in [0, 1)$. A parent's priority is always greater than its children's priorities.
-    - **Tree Rotations / Rebalancing:** Maintained without complex multi-case rotation code via functional `split(t, k)` and `merge(a, b)` primitives, guaranteeing expected logarithmic height $O(\log P)$ even under adversarial insertion sequences.
-- **Tree Traversals (In-Order Traversal):**
-  - **Syllabus Topic:** *Tree traversal techniques: Preorder, Inorder, Postorder.*
-  - **Files:** `python_server/engine.py` & `server/engine.ts` (`PriceTree.top`)
-  - **Details:** Extracts the top $N$ price levels by performing an in-order (for asks, ascending) or reverse in-order (for bids, descending) recursive traversal. This produces a perfectly sorted Level-2 depth ladder in $O(N)$ time, avoiding an $O(N \log N)$ comparison sort.
-
-### Unit-III: Graph Data Structures and Algorithms
-- **Graph & Tree Traversals (Depth-First Search - DFS):**
-  - **Syllabus Topic:** *Graph traversals: Depth First Search (DFS).*
-  - **Files:** `python_server/engine.py` & `server/engine.ts` (`Trie.search`)
-  - **Details:** After tracing the input prefix path down the Trie, a recursive DFS explores descendant edges in sorted alphabetical order, aggregating up to $K$ candidate symbols for interactive ticker autocomplete.
-- **Network Analysis & Event Distribution:**
-  - **Files:** `python_server/server.py` & `server/server.ts`
-  - **Details:** Implements a broadcast pub/sub network topology distributing 250 ms tick updates, trade executions, and depth deltas to subscribed client connections via WebSockets.
-
-### Unit-IV: Sorting, Searching and Hashing
-- **Hash Tables & Symbol Dictionaries:**
-  - **Syllabus Topic:** *Hash tables, collision resolution, symbol tables, dictionary implementation.*
-  - **Files:** `python_server/engine.py`, `python_server/portfolio.py` & `server/engine.ts`, `server/portfolio.ts`
-  - **Details:**
-    - `Engine.index` (`dict[str, OrderNode]` in Python / `Map<orderId, OrderNode>` in TS): Global hash index granting $O(1)$ average-time access to any active order across any symbol.
-    - `Engine.books` (`dict` in Python / `Map` in TS): Symbol dictionary routing incoming orders.
-    - `Portfolio.positions` (`dict` in Python / `Map` in TS): Hash map maintaining asset holdings and cost-basis accounting.
-- **Searching & Integer Cent Arithmetic:**
-  - Fast $O(\log P)$ BST binary searching in `PriceTree.get(k)`.
-  - Prices are mapped to integer cents (`round(price * 100)`), preventing floating-point hash mismatch and representation hazards.
-
-### Unit-V: Advanced Data Structures & Algorithmic Applications
-- **Trie Data Structure (Prefix Tree):**
-  - **Syllabus Topic:** *Trie Data Structure: representation, insertion, searching, applications: auto-complete systems.*
-  - **Files:** `python_server/engine.py` & `server/engine.ts` (`Trie`, `TrieNode`)
-  - **Details:** A handcrafted trie indexing valid stock tickers. Insertion and search run in $O(K)$ time (where $K$ is string length), delivering instantaneous prefix autocomplete in the search bar.
-- **Data Structure Design Applications:**
-  - **Syllabus Topic:** *Selecting appropriate data structures based on time complexity, space requirements, and application constraints.*
-  - **Details:** Rather than relying on a single data structure, Meridian integrates multiple specialized data structures into a cohesive system—pairing Trees with Doubly Linked Lists and Hash Maps to create a high-throughput, low-latency engine across both Python and TypeScript runtimes.
-
----
-
-## 9. System Architecture
-
-```text
-+-----------------------------------------------------------------------------------+
-|                                  CLIENT LAYER                                     |
-|  React 18 + Canvas Charts + OrderBook + TradeFeed + PortfolioView (Vite / Electron)|
-+----------------------------------------+------------------------------------------+
-                                         │  HTTP REST / WebSocket Protocol (/ws)
-                                         ▼
-+-----------------------------------------------------------------------------------+
-|                           INTERCHANGEABLE SERVER LAYER                            |
-|       Option A: python_server/server.py (FastAPI, Uvicorn & WebSockets)          |
-|       Option B: server/server.ts (Node.js, Express & ws Server)                   |
-+----------------------------------------+------------------------------------------+
-                                         │
-        ┌────────────────────────────────┼────────────────────────────────┐
-        ▼                                ▼                                ▼
-+───────────────────+          +───────────────────+          +───────────────────+
-| market.py / .ts   |          | engine.py / .ts   |          |portfolio.py / .ts |
-| (Market Simulator)|          | (Matching Engine) |          | (Paper Portfolio) |
-+─────────┬─────────+          +─────────┬─────────+          +─────────┬─────────+
-          │                              │                              │
-          │ 250ms Synthetic Ticks        │ Order Match & Cancellations  │ Fills & Reservations
-          ▼                              ▼                              ▼
-+───────────────────────────────────────────────────────────────────────────────────+
-|                     HANDCRAFTED DSA CORE (ZERO EXTERNAL LIBS)                     |
-|                                                                                   |
-|   1. Price Tree Index: Treap (Self-Balancing BST + Heap Rotations)                |
-|   2. Price Level Queue: Doubly Linked List (Strict FIFO Price-Time Priority)      |
-|   3. Global Order Index: Hash Table (O(1) Direct Pointer Cancellation)            |
-|   4. Trade Execution Tape: Circular Queue (Fixed-Capacity Bounded Ring Buffer)    |
-|   5. Ticker Autocomplete: Trie (O(K) Prefix Tree with DFS Traversal)              |
-+-----------------------------------------------------------------------------------+
-```
-
-The separation of concerns isolates the raw data structure operations in `engine.ts` from stochastic simulation (`market.ts`) and client communication (`server.ts`), allowing the data structures to be benchmarked and tested independently.
-
----
-
-## 10. Matching & Execution Algorithm
-
-When an order arrives at the matching engine, the execution lifecycle proceeds through deterministic steps:
-
-1. **Validation & Scaling:** Verify that symbol exists, side is `'B'` or `'S'`, order type is `'LIMIT'` or `'MARKET'`, quantity is a positive integer, and price is positive. Scale dollar prices to integer cents ($P_{\text{cents}} = \text{round}(P_{\text{dollars}} \times 100)$).
-2. **Opposite Book Discovery:** Query the opposite side of the book (`asks` for a buy order; `bids` for a sell order).
-3. **Crossed Spread Detection:**
-   - Retrieve the best available opposite price level via `opp.best()` in $O(\log P)$ time (minimum ask for buyers, maximum bid for sellers).
-   - If opposite book is empty or best price does not cross the limit price ($P_{\text{buy}} < P_{\text{ask}}$ or $P_{\text{sell}} > P_{\text{bid}}$), proceed to Step 6.
-4. **FIFO Order Matching:**
-   - Access the oldest resting order at the price level via `level.head` in $O(1)$ time.
-   - Calculate match quantity: $Q_{\text{fill}} = \min(Q_{\text{remaining}}, Q_{\text{maker}})$.
-   - Decrement quantities from the incoming order, maker order, and price level total.
-   - Record the executed trade into the `CircularQueue` in $O(1)$ time.
-   - Emit an `onMakerFill` event to update the portfolio.
-5. **Node Pruning & Level Cleanup:**
-   - If the resting order quantity reaches zero ($Q_{\text{maker}} = 0$):
-     - Unlink the order node from the doubly linked list in $O(1)$ time via `level.unlink(maker)`.
-     - Delete the order ID from `Engine.index` in $O(1)$ time.
-   - If the price level becomes empty (`level.count === 0`):
-     - Remove the price node from the Treap via `PriceTree.remove(price)` in $O(\log P)$ time.
-   - Repeat Steps 3–5 until incoming order is filled or no crossing prices remain.
-6. **Resting or Discarding Remainder:**
-   - If $Q_{\text{remaining}} > 0$ and order type is `'LIMIT'`:
-     - Search or insert the target price level into the Treap in $O(\log P)$ time.
-     - Append the order node to the `tail` of the doubly linked list in $O(1)$ time.
-     - Register the order into `Engine.index` in $O(1)$ time.
-   - If $Q_{\text{remaining}} > 0$ and order type is `'MARKET'`:
-     - Discard the unfilled balance (`CANCELLED_REMAINDER`). Market orders never rest on the book.
-
----
-
-## 11. Pseudocode
-
-### 11.1 Matching Engine Core (`place`)
-
-```text
-FUNCTION place_order(symbol, side, type, price_cents, qty):
-    book = books.get(symbol)
-    opp_tree = (side == 'B') ? book.asks : book.bids
-    fills = empty list
-
-    WHILE qty > 0:
-        best_level = opp_tree.best(is_max = (side == 'S'))
-        IF best_level is NULL:
-            BREAK
-
-        // Check limit price crossing condition
-        IF type == 'LIMIT':
-            IF (side == 'B' AND best_level.price > price_cents) OR
-               (side == 'S' AND best_level.price < price_cents):
-                BREAK
-
-        maker_node = best_level.head
-        fill_qty = MIN(qty, maker_node.qty)
-
-        qty -= fill_qty
-        maker_node.qty -= fill_qty
-        best_level.total -= fill_qty
-
-        trade = CREATE_TRADE(symbol, best_level.price, fill_qty, side)
-        circular_queue.push(trade)
-        APPEND trade TO fills
-
-        IF maker_node.qty == 0:
-            best_level.unlink(maker_node)
-            order_index.delete(maker_node.id)
-
-            IF best_level.count == 0:
-                opp_tree.remove(best_level.price)
-
-    IF qty > 0 AND type == 'LIMIT':
-        new_node = CREATE_NODE(symbol, side, price_cents, qty)
-        target_level = my_tree.get(price_cents)
-        IF target_level is NULL:
-            target_level = CREATE_LEVEL(price_cents)
-            my_tree.insert(price_cents, target_level)
-        target_level.push(new_node)
-        order_index.set(new_node.id, new_node)
-
-    RETURN fills, remaining_qty
-```
-
-### 11.2 Treap Rebalancing via Split & Merge
-
-```text
-FUNCTION split(node, key):
-    IF node is NULL:
-        RETURN (NULL, NULL)
-    IF node.key < key:
-        (left_sub, right_sub) = split(node.right, key)
-        node.right = left_sub
-        RETURN (node, right_sub)
-    ELSE:
-        (left_sub, right_sub) = split(node.left, key)
-        node.left = right_sub
-        RETURN (left_sub, node)
-
-FUNCTION merge(left_tree, right_tree):
-    IF left_tree is NULL: RETURN right_tree
-    IF right_tree is NULL: RETURN left_tree
-
-    IF left_tree.priority > right_tree.priority:
-        left_tree.right = merge(left_tree.right, right_tree)
-        RETURN left_tree
-    ELSE:
-        right_tree.left = merge(left_tree, right_tree.left)
-        RETURN right_tree
-```
-
-### 11.3 Instantaneous $O(1)$ Order Cancellation
-
-```text
-FUNCTION cancel_order(order_id):
-    order_node = order_index.get(order_id)       // O(1) Hash Map lookup
-    IF order_node is NULL:
-        RETURN error "Order not found"
-
-    price_level = order_node.level
-    price_level.unlink(order_node)                // O(1) Pointer rewiring
-
-    IF price_level.count == 0:
-        book.side(order_node.side).remove(price_level.price)  // O(log P) Treap prune
-
-    order_index.delete(order_id)                 // O(1) Hash Map deletion
-    RETURN success
-```
-
----
-
-## 12. Time and Space Complexity Analysis
-
-Let:
-- $P$ = Number of active, distinct price levels in the order book.
-- $N$ = Total number of resting orders across all price levels.
-- $M$ = Number of matched fills generated by an incoming order.
-- $K$ = Length of a ticker symbol string (typically 3–5 characters).
-- $C$ = Capacity limit of the Circular Queue ($C = 1,000$).
-
-### 12.1 Detailed Operation Complexity
-
-| Module | Operation | Best Case | Average Case | Worst Case | Space Complexity |
-|---|---|---|---|---|---|
-| **PriceTree (Treap)** | `insert(price, level)` | $O(1)$ | $O(\log P)$ | $O(\log P)^*$ | $O(P)$ |
-| **PriceTree (Treap)** | `remove(price)` | $O(1)$ | $O(\log P)$ | $O(\log P)^*$ | $O(1)$ auxiliary |
-| **PriceTree (Treap)** | `best(min/max)` | $O(1)$ | $O(\log P)$ | $O(\log P)^*$ | $O(1)$ |
-| **PriceTree (Treap)** | `top(k)` Depth Walk | $O(k)$ | $O(k)$ | $O(k)$ | $O(k)$ output |
-| **PriceLevel (Doubly-LL)** | `push(order)` (Enqueue) | $O(1)$ | $O(1)$ | $O(1)$ | $O(1)$ |
-| **PriceLevel (Doubly-LL)** | `unlink(order)` (Cancel) | $O(1)$ | $O(1)$ | $O(1)$ | $O(1)$ |
-| **Order Index (Hash Map)** | `get(id)` / `delete(id)` | $O(1)$ | $O(1)$ | $O(N)^{**}$ | $O(N)$ |
-| **Composite Cancel** | `cancel(id)` | $O(1)$ | $O(1)$ | $O(\log P)$ | $O(1)$ |
-| **Engine Match Execution** | `place(order)` with $M$ fills | $O(1)$ | $O(M + \log P)$ | $O(M + \log P)$ | $O(M)$ fills |
-| **CircularQueue** | `push(trade)` | $O(1)$ | $O(1)$ | $O(1)$ | $O(C)$ fixed |
-| **Trie** | `insert(symbol)` | $O(K)$ | $O(K)$ | $O(K)$ | $O(K)$ |
-| **Trie** | `search(prefix)` | $O(K)$ | $O(K + \Sigma)$ | $O(K + \Sigma)$ | $O(\Sigma)$ output |
-
-*\* Due to randomized continuous heap priorities, Treap height degradation to $O(N)$ has probability approaching zero ($p < 10^{-12}$ for large $N$).*  
-*\*\* Modern hash table collision resolution yields amortized $O(1)$ performance.*
-
-### 12.2 Space Complexity Bounds
-- **Engine In-Memory Storage:** $O(P + N + C + \Sigma_{\text{trie}})$
-  - $P \le 200$ active price levels per symbol $\implies \approx 10$ KB.
-  - $N \le 10,000$ active resting orders $\implies \approx 1.2$ MB.
-  - $C = 1,000$ fixed trade slots $\implies \approx 120$ KB.
-  - Total engine memory overhead is exceptionally compact (< 15 MB), guaranteeing zero disk swap latency and cache-friendly CPU operation.
-
----
-
-## 13. Data Design & State Architecture
-
-### 13.1 In-Memory Entities (Dual Language Implementation)
-
-#### Python Implementation (`python_server/engine.py` with `__slots__` optimization):
-```python
-class OrderNode:
-    __slots__ = ('id', 'symbol', 'side', 'price', 'qty', 'ts', 'prev', 'next', 'level')
-
-    def __init__(self, order_id: str, symbol: str, side: str, price: int, qty: int, ts: int):
-        self.id = order_id              # Unique identifier (e.g. "O1042")
-        self.symbol = symbol            # Ticker (e.g. "AAPL")
-        self.side = side                # 'B' (Bid) or 'S' (Ask)
-        self.price = price              # Integer cents ($100.50 -> 10050)
-        self.qty = qty                  # Unfilled quantity
-        self.ts = ts                    # Timestamp for FIFO priority
-        self.prev: Optional[OrderNode] = None
-        self.next: Optional[OrderNode] = None
-        self.level: Optional[PriceLevel] = None
-
-class TNode:
-    __slots__ = ('k', 'v', 'p', 'l', 'r')
-
-    def __init__(self, k: int, v: PriceLevel):
-        self.k = k                      # Search Key: Price in integer cents
-        self.v = v                      # Satellite Data: Doubly linked list
-        self.p = random.random()        # Heap Priority in [0, 1)
-        self.l: Optional[TNode] = None  # Left subtree
-        self.r: Optional[TNode] = None  # Right subtree
-```
-
-#### TypeScript Implementation (`server/engine.ts`):
-```typescript
-interface OrderNode {
-  id: string;              // Unique order identifier (e.g., "O1042")
-  symbol: string;          // Instrument ticker (e.g., "AAPL")
-  side: 'B' | 'S';         // 'B' = Buy / Bid, 'S' = Sell / Ask
-  price: number;           // Stored in integer cents ($100.50 -> 10050)
-  qty: number;             // Unfilled share quantity
-  ts: number;              // Millisecond timestamp for FIFO priority
-  prev: OrderNode | null;  // Previous order in queue
-  next: OrderNode | null;  // Next order in queue
-  level: PriceLevel | null;// Reference to parent price level
-}
-
-class TNode {
-  k: number;               // Search Key: Price in integer cents
-  v: PriceLevel;           // Satellite Data: Doubly linked list of orders
-  p = Math.random();       // Heap Priority in [0, 1)
-  l: TNode | null = null;  // Left child pointer
-  r: TNode | null = null;  // Right child pointer
-}
-```
-
-### 13.2 Representation of Currency (Integer Cent Model)
-Floating-point arithmetic (e.g., `0.1 + 0.2 === 0.30000000000000004`) causes balance discrepancies in financial software. Meridian enforces integer arithmetic throughout the matching core:
-$$\text{Price}_{\text{internal}} = \text{round}(\text{Price}_{\text{dollars}} \times 100)$$
-Price comparisons, cost basis, cash reservations, and trade settlement are computed using integer cents and converted to floating-point dollar strings only at the presentation layer.
-
----
-
-## 14. Installation and Execution
-
-### Prerequisites
-- **Node.js:** v18.0.0 or higher & **npm:** v9.0.0 or higher
-- **Python (Optional for Python backend):** v3.10+ (with `fastapi`, `uvicorn`, `websockets`, `pydantic`)
-
-### Setup & Run Commands
-
-#### Standard TypeScript / Node.js Engine
 ```powershell
-# 1. Install dependencies
+git clone https://github.com/AadityaBarapatre/Meridian.git
+cd Meridian
+```
+
+### 2️⃣ Install Frontend & TypeScript Dependencies
+
+```powershell
 npm install
+```
 
-# 2. Run TypeScript DSA acceptance tests (16/16 tests)
-npm test
+### 3️⃣ Choose Your Engine Runtime & Start
 
-# 3. Start full-stack development mode (Express server on :4000 + React UI on :5173)
+You can run **either** the Python backend or the TypeScript backend. Both connect seamlessly to the same frontend terminal!
+
+#### Option A: Python Backend (FastAPI + Uvicorn)
+
+In your first PowerShell window:
+
+```powershell
+python -m pip install -r requirements.txt
+python python_server/server.py
+```
+*The Python API starts at `http://127.0.0.1:4000` with WebSocket support at `ws://127.0.0.1:4000/ws`.*
+
+#### Option B: TypeScript Backend (Node.js + Express)
+
+In your first PowerShell window:
+
+```powershell
+npm run server
+```
+*The TypeScript API starts at `http://127.0.0.1:4000` with WebSocket support at `ws://127.0.0.1:4000/ws`.*
+
+---
+
+### 4️⃣ Start the Frontend Trading Terminal
+
+In a **second PowerShell window**:
+
+```powershell
 npm run dev
 ```
 
-#### Python Engine (FastAPI + WebSockets)
-```powershell
-# 1. Install Python dependencies
-pip install -r requirements.txt
+Open your browser to `http://localhost:5173`. The terminal connects automatically, streams live L2 depth books, and updates the canvas charts every 250ms!
 
-# 2. Run Python DSA acceptance tests (16/16 tests)
-npm run python:test
-# or directly with python:
-python -m unittest discover -s python_server/tests -v
+### 5️⃣ Run as Desktop App with Electron (Optional)
 
-# 3. Start full-stack with Python backend (:4000) and React UI (:5173)
-npm run dev:py
-# or launch backend directly:
-python -m uvicorn python_server.server:app --port 4000
-```
-
-### Desktop Application Execution
-To run Meridian as a standalone desktop application via Electron:
+In a **third PowerShell window**:
 
 ```powershell
-npm run desktop
+npm run electron
 ```
 
-To compile production-ready installers for Windows:
+### 6️⃣ Run the Automated Test Suites
 
 ```powershell
-npm run dist
+# Run all Python unit tests:
+python -m unittest discover -s python_server/tests
+
+# Run all TypeScript unit tests:
+npx tsx test/engine.test.ts
+npx tsx test/market.test.ts
 ```
 
----
+<details>
+<summary><b>🩺 Windows Troubleshooting Guide</b></summary>
 
-## 15. Testing Procedure & Acceptance Verification
-
-Meridian includes identical 16-test acceptance suites in both TypeScript (`test/`) and Python (`python_server/tests/`), validating all data structure behaviors, boundary limits, and matching invariants.
-
-```powershell
-# Run TypeScript Test Suite:
-npm test
-
-# Run Python Test Suite:
-npm run python:test
-```
-
-### 15.1 Unit Tests (`test/engine.test.ts`)
-
-| # | Test Scenario | Data Structure Under Test | Verification Criteria |
-|---|---|---|---|
-| 1 | **Price Priority** | `PriceTree` (Treap) | Bids at higher prices and asks at lower prices match before worse prices. |
-| 2 | **Time Priority (FIFO)** | `PriceLevel` (Doubly-LL) | At identical price tiers, the older order fills first from `head`. |
-| 3 | **Partial Fills** | `OrderNode` & `PriceLevel` | Taker is satisfied while maker's remaining quantity remains resting. |
-| 4 | **$O(1)$ Cancel & Pruning** | `Engine.index` & `PriceTree` | Node is unlinked in $O(1)$; empty price levels are pruned from the Treap. |
-| 5 | **Market Order Sweep** | `OrderBook` & `PriceTree` | Sweeps multiple price levels; unfilled balance is discarded, not rested. |
-| 6 | **Trie Prefix Autocomplete**| `Trie` with DFS | `search('N')` accurately returns `['NFLX', 'NVDA']`. |
-| 7 | **Circular Queue Wrap** | `CircularQueue` (Ring Buffer)| Pushing the 1,001st trade overwrites the oldest trade without buffer growth. |
-| 8 | **Input Validation** | Input Sanitizer | Zero/negative quantities, invalid sides, and non-positive prices throw errors. |
-
-### 15.2 Market & Portfolio Tests (`test/market.test.ts`)
-
-| # | Test Scenario | Verification Criteria |
+| Issue | Cause | Solution |
 |---|---|---|
-| 1 | **8-Hour Candle History** | Confirms 480 continuous one-minute OHLCV candles are generated per ticker. |
-| 2 | **Two-Sided Flow** | Asserts both sides of the book trade and prices oscillate without runaway drift. |
-| 3 | **Live Candle Rolling** | Verifies tick updates update Open, High, Low, and Close consistently. |
-| 4 | **Market Buy Accounting** | Confirms cash is deducted and position quantity increases. |
-| 5 | **P&L Realization** | Confirms selling realizes correct profit/loss and rejects overselling. |
-| 6 | **Buying Power Reservation**| Limit bids lock cash; cancelling releases reserved buying power. |
-| 7 | **Overdraft Protection** | Order placement exceeding available buying power is rejected. |
-| 8 | **Passive Maker Fills** | Resting limit orders book fills when hit by synthetic market flow. |
+| `Port 4000 is already in use` | A previous backend instance is still active | Run `Stop-Process -Name python,node -Force` in PowerShell and restart. |
+| `pip is not recognized` | Python is missing from your Windows PATH | Re-run Python installer and check **"Add Python to PATH"**, or use `py -m pip install -r requirements.txt`. |
+| Script execution disabled | PowerShell execution policy restriction | Run `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass` and rerun. |
+| WebSocket connection failed | Backend server is not running | Ensure `python_server/server.py` or `npm run server` is actively running on port 4000. |
+
+</details>
 
 ---
 
-## 16. Financial & Algorithmic Safeguards
+## 🔌 API Reference
 
-- **Strict Capital Reservation:** Placing a resting limit buy locks the required cash ($P \times Q$). The cash cannot be double-spent while the order rests.
-- **Short-Sale & Oversell Rejection:** Sell orders cannot exceed the trader's currently available shares (net of other resting sell orders).
-- **Execution Price Protection:** Limit orders execute only at the specified limit price or better.
-- **Memory Bounding:** The trade feed ring buffer is capped at 1,000 items, preventing unconstrained heap growth during extended trading sessions.
-- **Immediate Market Order Disposal:** Unfilled market order balances are immediately cancelled rather than rested at arbitrary prices.
-- **Integer Price Quantization:** Elimination of floating-point arithmetic protects against rounding errors during trade execution.
+Base URL: `http://127.0.0.1:4000` | WebSocket: `ws://127.0.0.1:4000/ws`
+
+| Method | Endpoint | Description | Status Codes |
+|:--:|---|---|:--:|
+| `GET` | `/api/bootstrap` | Complete market snapshot (all 8 tickers, prices, and depth) | 200, 500 |
+| `GET` | `/api/candles` | Historical 1-minute OHLCV candles (query: `symbol`, `count`) | 200, 400, 500 |
+| `POST` | `/api/orders` | Submit new Limit or Market order | 200, 400, 500 |
+| `DELETE`| `/api/orders/:id` | Cancel resting order in $O(1)$ time via pointer unlinking | 200, 404, 500 |
+| `GET` | `/api/orders` | Retrieve all active resting orders | 200, 500 |
+| `GET` | `/api/portfolio` | Real-time mark-to-market balances, cash, buying power | 200, 500 |
+| `POST` | `/api/portfolio/reset`| Reset paper portfolio back to initial $100,000 cash balance | 200, 500 |
+| `WS` | `/ws` | Real-time 250ms tick feed, L2 depth updates, and fill events | 101 Switching |
+
+<details>
+<summary><b>📥 Example: Submit a Limit Order</b></summary>
+
+```powershell
+Invoke-RestMethod -Uri http://127.0.0.1:4000/api/orders -Method Post -ContentType "application/json" -Body '{"symbol": "AAPL", "side": "B", "type": "LIMIT", "price": 185.50, "quantity": 100}'
+```
+
+Response `200 OK`:
+```json
+{
+  "order": {
+    "id": "ord-98241",
+    "symbol": "AAPL",
+    "side": "B",
+    "type": "LIMIT",
+    "price": 185.50,
+    "quantity": 100,
+    "filled": 0,
+    "timestamp": 1713540000000
+  },
+  "trades": [],
+  "portfolio": {
+    "cash": 81450.00,
+    "reserved": 18550.00,
+    "buyingPower": 81450.00,
+    "equity": 100000.00
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>📥 Example: Cancel an Order in $O(1)$ Time</b></summary>
+
+```powershell
+Invoke-RestMethod -Uri http://127.0.0.1:4000/api/orders/ord-98241 -Method Delete
+```
+
+Response `200 OK`:
+```json
+{
+  "success": true,
+  "cancelledId": "ord-98241",
+  "releasedBuyingPower": 18550.00
+}
+```
+
+</details>
+
+<details>
+<summary><b>📡 Example: Real-Time WebSocket Message Format</b></summary>
+
+```json
+{
+  "type": "tick",
+  "symbol": "NVDA",
+  "price": 495.25,
+  "bid": 495.20,
+  "ask": 495.30,
+  "volume": 125400,
+  "change": 2.45,
+  "changePct": 0.49
+}
+```
+
+</details>
 
 ---
 
-## 17. Limitations
+## 🛡️ Engineering Highlights
 
-- **Single-Node In-Memory Storage:** The order book resides in Node.js process memory. Restarting the server resets the paper portfolio and order books to initial states.
-- **Simulated Order Flow:** Order flow is driven by an Ornstein–Uhlenbeck stochastic mathematical process, not live exchange feeds (e.g., NASDAQ / NYSE).
-- **Single-Account Architecture:** Designed for a single active paper trader against simulated automated market participants.
-- **Simplified Margin Model:** Requires 100% cash coverage for limit buys; does not implement complex margin borrowing or short-selling leverage.
-
----
-
-## 18. Future Enhancements
-
-- **Disjoint-Set (Union-Find) Sector Clusters:** Implement a Disjoint-Set structure (Unit-V) to cluster stocks by correlation and sector contagion.
-- **Disk Persistence via B-Trees:** Implement a B-Tree storage engine (Unit-II) to persist trade journals and account ledgers to disk.
-- **Stop-Loss & Conditional Orders:** Priority-queue based trigger books for Stop-Loss and Take-Profit orders.
-- **FIX Protocol Gateway:** Implement a Financial Information eXchange (FIX 4.2/4.4) TCP socket interface for automated algorithmic trading bot integration.
-- **Level-3 (L3) Market by Order Tape:** Full individual order life-cycle tracking and dissemination.
+| Architectural Decision | Implementation Rationale |
+|---|---|
+| **Zero External Libraries** | All data structures (Treap, Doubly-LL, CircularQueue, Trie) are written completely from scratch without `collections`, `heapq`, or npm packages. |
+| **Integer Cent Arithmetic** | All prices are stored and calculated as integer cents ($P_{\text{cents}} = \text{round}(P \times 100)$), preventing IEEE-754 binary floating-point rounding errors and hash collisions. |
+| **$O(1)$ Order Cancellations** | Direct pointer updates in the doubly linked list eliminate linear scans, supporting extreme cancel-to-fill ratios. |
+| **Bounded Circular Ring Buffers** | Fixed-capacity 1,000-slot buffer for time & sales trades prevents memory growth, memory fragmentation, and GC latency spikes. |
+| **Dual-Runtime Parity** | Architectural 1:1 mirroring across Python 3 and TypeScript allows direct performance and algorithmic comparison. |
+| **Hardware-Accelerated Canvas** | Candlestick charts render hundreds of historical bars at 60 FPS without external charting libraries. |
 
 ---
 
-## 19. Conclusion
+## 🎓 For Evaluators: Where To Look
 
-Meridian translates academic Data Structures and Algorithms into a production-style, real-time financial system. By mapping core syllabus competencies—including **Doubly Linked Lists**, **Self-Balancing Trees (Treaps)**, **In-Order Traversals**, **Hash Maps**, **Circular Queues**, and **Tries**—directly to performance-critical components of an electronic matching engine, the project demonstrates how optimal data structure selection delivers deterministic, microsecond-grade performance.
+| Syllabus Topic / Competency | Course Outcome | Primary Source File | Functions & Symbols to Inspect |
+|---|:---:|---|---|
+| **Doubly Linked Lists & Queues** | **CO-2, CO-3** | [`python_server/engine.py`](file:///c:/Users/DELL/OneDrive/Desktop/DSA/TA/python_server/engine.py)<br>[`server/engine.ts`](file:///c:/Users/DELL/OneDrive/Desktop/DSA/TA/server/engine.ts) | `class PriceLevel`, `class OrderNode`<br>`append()`, `unlink()`, `pop_front()` |
+| **Circular Queue Ring Buffer** | **CO-2** | [`python_server/engine.py`](file:///c:/Users/DELL/OneDrive/Desktop/DSA/TA/python_server/engine.py)<br>[`server/engine.ts`](file:///c:/Users/DELL/OneDrive/Desktop/DSA/TA/server/engine.ts) | `class CircularQueue`<br>`append()`, `to_list()`, `head`, modulo arithmetic |
+| **Treap (Self-Balancing BST + Heap)** | **CO-4** | [`python_server/engine.py`](file:///c:/Users/DELL/OneDrive/Desktop/DSA/TA/python_server/engine.py)<br>[`server/engine.ts`](file:///c:/Users/DELL/OneDrive/Desktop/DSA/TA/server/engine.ts) | `class PriceTree`, `class TNode`<br>`split()`, `merge()`, `put()`, `remove()`, `top()` |
+| **Trie (Prefix Tree) & DFS** | **CO-4, CO-5** | [`python_server/engine.py`](file:///c:/Users/DELL/OneDrive/Desktop/DSA/TA/python_server/engine.py)<br>[`server/engine.ts`](file:///c:/Users/DELL/OneDrive/Desktop/DSA/TA/server/engine.ts) | `class Trie`, `class TrieNode`<br>`insert()`, `search()`, recursive DFS |
+| **Hash Tables & Symbol Lookup** | **CO-5** | [`python_server/portfolio.py`](file:///c:/Users/DELL/OneDrive/Desktop/DSA/TA/python_server/portfolio.py)<br>[`server/portfolio.ts`](file:///c:/Users/DELL/OneDrive/Desktop/DSA/TA/server/portfolio.ts) | `Engine.index`, `Engine.books`, `Portfolio.positions` |
+| **Order Matching Algorithm** | **CO-1, CO-5** | [`python_server/engine.py`](file:///c:/Users/DELL/OneDrive/Desktop/DSA/TA/python_server/engine.py)<br>[`server/engine.ts`](file:///c:/Users/DELL/OneDrive/Desktop/DSA/TA/server/engine.ts) | `OrderBook.submit()`, `cancel()`, `best_bid()`, `best_ask()` |
+| **Automated Unit Test Suites** | **CO-1** | [`python_server/tests/test_engine.py`](file:///c:/Users/DELL/OneDrive/Desktop/DSA/TA/python_server/tests/test_engine.py)<br>[`test/engine.test.ts`](file:///c:/Users/DELL/OneDrive/Desktop/DSA/TA/test/engine.test.ts) | 16 formal invariant test assertions |
+
+### 📏 Code at a Glance
+
+| Component | File | Language | Lines of Code | Key Role |
+|---|---|---|:---:|---|
+| **Python Matching Engine** | `python_server/engine.py` | Python 3 | 337 | Handcrafted Treap, Doubly-LL, Trie, CircularQueue |
+| **TypeScript Matching Engine** | `server/engine.ts` | TypeScript | 317 | Exact algorithmic parity implementation |
+| **Python Market Simulator** | `python_server/market.py` | Python 3 | 293 | Stochastic Ornstein-Uhlenbeck order flow |
+| **TypeScript Market Simulator** | `server/market.ts` | TypeScript | 331 | Stochastic tick generation & synthetic book depth |
+| **Python Portfolio Accounting** | `python_server/portfolio.py`| Python 3 | 244 | Margin reservations, P&L calculations |
+| **TypeScript Portfolio** | `server/portfolio.ts` | TypeScript | 246 | Paper account state management |
+| **Python Server & WS** | `python_server/server.py` | Python 3 | 244 | FastAPI REST API & WebSocket pub/sub |
+| **TypeScript Server & WS** | `server/server.ts` | TypeScript | 180 | Express & ws broadcasting |
+| **React Glassmorphic Terminal**| `src/App.tsx` | TSX / React | 408 | Dynamic terminal dashboard layout |
+| **Canvas Candlestick Chart** | `src/components/CandleChart.tsx`| TSX / Canvas | 399 | Hardware-accelerated OHLCV rendering |
+| **Portfolio View** | `src/components/PortfolioView.tsx`| TSX / React | 258 | Portfolio dashboard & mark-to-market metrics |
+| **Engine Test Suite** | `python_server/tests/test_engine.py`| Python 3 | 133 | Formal unit tests for Treap, FIFO, Trie |
+| **Market Test Suite** | `python_server/tests/test_market.py`| Python 3 | 107 | Formal unit tests for market & portfolio |
+| **Glassmorphic Theme Styling** | `src/styles/glass.css` | CSS | 1,624 | Sleek dark trading terminal theme |
+| **Total** | | | **5,121** | Comprehensive full-stack platform |
 
 ---
 
-## Project Structure
+## 📁 Project Structure
 
 ```text
-d:\MyProjects\DSA_proj/
-├── electron/
-│   ├── main.cjs            # Electron native window controller (1400x900)
-│   └── server.cjs          # Production bundled backend service
-├── server/
-│   ├── engine.ts           # Handcrafted DSA: Treap, Doubly-LL, CircularQueue, Trie
-│   ├── market.ts           # Ornstein-Uhlenbeck stochastic market simulator
-│   ├── portfolio.ts        # Paper account, margin reservations & P&L calculation
-│   └── server.ts           # Express REST API, WebSocket pub/sub & market loop
-├── python_server/
-│   ├── engine.py           # Handcrafted Python DSA: Treap, Doubly-LL, Ring Buffer, Trie
-│   ├── market.py           # Python Ornstein-Uhlenbeck market simulation engine
-│   ├── portfolio.py        # Python paper portfolio manager & margin reservations
-│   ├── server.py           # FastAPI REST API & WebSocket pub/sub server
-│   └── tests/
-│       ├── test_engine.py  # 8 unit tests for Python DSA invariants
-│       └── test_market.py  # 8 unit tests for Python market & portfolio
-├── src/
-│   ├── App.tsx             # Terminal root, state machine & WebSocket coordination
-│   ├── types.ts            # Shared domain types and protocol schemas
-│   ├── lib/format.ts       # Numeric, currency, and date formatting utilities
-│   ├── components/
-│   │   ├── CandleChart.tsx     # GPU-accelerated canvas OHLCV candlestick chart
-│   │   ├── EquityChart.tsx     # Account equity area chart
-│   │   ├── MarketWatch.tsx     # Ticker watchlist with mini sparklines
-│   │   ├── OrderBook.tsx       # Live Level-2 depth ladder with cumulative volume
-│   │   ├── TradeFeed.tsx       # Time & sales feed backed by circular queue
-│   │   ├── TradePanel.tsx      # Limit and market order entry ticket
-│   │   ├── PortfolioView.tsx   # Asset holdings, orders, and P&L breakdown
-│   │   ├── Sparkline.tsx       # Inline SVG vector sparkline
-│   │   └── BackgroundCanvas.tsx # Ambient canvas background
-│   └── styles/glass.css    # High-density glassmorphism design system
-├── test/
-│   ├── engine.test.ts      # 8 acceptance tests for core DSA invariants
-│   ├── market.test.ts      # 8 acceptance tests for simulation & portfolio
-│   ├── test-reconnect.cjs  # WebSocket reconnection resilience test
-│   └── test-ws.cjs         # WebSocket protocol sanity check
-├── index.html              # Web entrypoint
-├── package.json            # Scripts, metadata, and dependencies
-├── tsconfig.json           # Strict TypeScript configuration
-└── vite.config.ts          # Vite build pipeline
+Meridian/
+├── 📂 python_server/             # Dual Core Python Runtime
+│   ├── engine.py                 # Handcrafted Treap, Doubly-LL, CircularQueue, Trie
+│   ├── market.py                 # Stochastic market simulation (Ornstein-Uhlenbeck)
+│   ├── portfolio.py              # Paper portfolio, margin reservation, and P&L
+│   ├── server.py                 # FastAPI REST API & WebSocket event loop
+│   └── 📂 tests/                 # Python automated unit test suite
+│       ├── test_engine.py        # Algorithmic invariant tests (8 tests)
+│       └── test_market.py        # Execution and portfolio tests (8 tests)
+├── 📂 server/                    # Dual Core TypeScript Runtime
+│   ├── engine.ts                 # TypeScript parity matching engine
+│   ├── market.ts                 # TypeScript market simulator
+│   ├── portfolio.ts              # TypeScript paper portfolio manager
+│   └── server.ts                 # Express REST API & ws WebSocket server
+├── 📂 src/                       # React 18 Terminal Frontend
+│   ├── 📂 components/            # UI Components
+│   │   ├── CandleChart.tsx       # GPU Canvas Candlestick & EMA chart
+│   │   ├── OrderBook.tsx         # Level-2 order book depth ladder
+│   │   ├── TradePanel.tsx        # Order entry form & margin calculation
+│   │   ├── TradeFeed.tsx         # CircularQueue trade tape & flow meter
+│   │   ├── PortfolioView.tsx     # Account equity, P&L, and open positions
+│   │   ├── MarketWatch.tsx       # Ticker search & symbol list
+│   │   └── Sparkline.tsx         # Mini canvas price sparklines
+│   ├── 📂 styles/
+│   │   └── glass.css             # Glassmorphic financial terminal theme
+│   ├── App.tsx                   # Main terminal container & WebSocket hook
+│   └── types.ts                  # Shared TypeScript interfaces
+├── 📂 electron/
+│   └── main.js                   # Cross-platform desktop window container
+├── 📂 test/                      # TypeScript automated unit tests
+│   ├── engine.test.ts            # Engine test runner
+│   └── market.test.ts            # Market test runner
+├── 📂 screenshots/               # Terminal preview screenshots (3)
+├── package.json                  # Node.js dependencies & run scripts
+├── requirements.txt              # Python dependencies (fastapi, uvicorn, websockets)
+├── tsconfig.json                 # TypeScript compiler configuration
+├── vite.config.ts                # Vite frontend bundler configuration
+└── README.md                     # Project documentation
 ```
 
 ---
 
-## 20. Textbooks & Academic References
+## 🚧 Known Limitations
 
-1. **Ellis Horowitz, Sartaj Sahni, and Susan Anderson-Freed;** *Fundamentals of Data Structures in C*; Second Edition; Universities Press; 2008.
-2. **Robert Kruse, C. L. Tondo, Bruce Leung, and Sashu Mogalla;** *Data Structures and Program Design in C*; Second Edition; Pearson Education; 2006.
-3. **Mark Allen Weiss;** *Data Structures and Algorithm Analysis in C*; Second Edition; Pearson Education; 2002.
-4. **Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein;** *Introduction to Algorithms*; Third Edition; MIT Press / PHI; 2009.
+> [!WARNING]
+> **Meridian is an educational trading terminal and matching engine simulation.**
+> - State is currently maintained in-memory for deterministic low-latency benchmarking and resets upon restarting the server process.
+> - Orders and cash are entirely simulated ($100,000 starting paper cash); no real money or live brokerages are connected.
+> - Market participants are driven by local stochastic agents to emulate realistic two-sided liquidity.
+
+---
+
+## 🔮 Roadmap
+
+- [ ] Persistent Level-3 (L3) order book journaling with write-ahead logging (WAL)
+- [ ] FIX protocol (Financial Information eXchange) endpoint integration
+- [ ] Options and derivatives pricing module with Black-Scholes Greeks
+- [ ] Multi-threaded matching core using shared memory ring buffers
+- [ ] Custom algorithmic trading bot editor with Python/Lua scripting
+- [ ] Multi-node distributed consensus replication via Raft
+
+---
+
+## ❓ FAQ
+
+<details>
+<summary><b>Why use a Treap instead of a Red-Black Tree or AVL Tree?</b></summary>
+
+A Treap (Cartesian Tree) achieves self-balancing using randomized priorities with simple, elegant `split` and `merge` primitives rather than complex multi-case tree rotation algorithms. This keeps the code clean, handcrafted from first principles, and easily auditable while guaranteeing expected $O(\log P)$ search, insert, and delete operations.
+
+</details>
+
+<details>
+<summary><b>Why is the Doubly Linked List necessary if the Treap is already sorted?</b></summary>
+
+The Treap sorts price levels ($O(\log P)$). However, at each individual price level, multiple orders compete. To guarantee strictly fair **Price-Time Priority (FIFO)**, orders must execute in arrival sequence ($O(1)$ at `head`). Furthermore, when an order is cancelled, a doubly linked list allows removing the order in $O(1)$ time by unlinking adjacent pointers, avoiding an $O(N)$ linear traversal.
+
+</details>
+
+<details>
+<summary><b>Why are prices stored in integer cents instead of floats?</b></summary>
+
+Standard IEEE-754 double-precision floating-point numbers cannot accurately represent decimal fractions (e.g., $0.1 + 0.2 \neq 0.3$). Over thousands of trade executions, rounding errors accumulate into balance discrepancies. By scaling all prices by 100 into integer cents, all calculations remain perfectly exact and immune to floating-point drift.
+
+</details>
+
+<details>
+<summary><b>Can I run the Python engine and the TypeScript engine simultaneously?</b></summary>
+
+Both backends are configured to listen on port 4000. While you cannot run them on the same port at the same exact moment, you can seamlessly switch between them without modifying any frontend code.
+
+</details>
+
+<details>
+<summary><b>Is the Canvas chart using TradingView or an external library?</b></summary>
+
+No. The candlestick chart in `src/components/CandleChart.tsx` is built completely from scratch using the native HTML5 Canvas API. It computes coordinate transformations, gridlines, candles, wicks, volume bars, and exponential moving averages directly on the GPU.
+
+</details>
+
+---
+
+## 👥 Authors & Credits
+
+<div align="center">
+
+**Aaditya Barapatre**  
+Developed for **Data Structures & Algorithms (24EE05TH0505 – 2)**  
+B. Tech. Electronics & Communication Engineering
+
+🔗 **[github.com/AadityaBarapatre/Meridian](https://github.com/AadityaBarapatre/Meridian)**
+
+</div>
+
+---
+
+## 📄 License
+
+This project is released under the **MIT License**. Feel free to use, study, and build upon this project for academic and personal applications.
+
+<div align="center">
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0984E3,100:00CEC9&height=110&section=footer" alt="footer" width="100%">
+
+**If you find this project helpful, give it a ⭐ on GitHub!**
+
+</div>
