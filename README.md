@@ -11,9 +11,13 @@
 
 **Meridian** is a high-performance, full-stack electronic order matching engine and paper trading terminal developed to demonstrate the critical role of fundamental Data Structures and Algorithms (DSA) in low-latency financial systems. Built entirely without external third-party data structure libraries, the matching core is handcrafted from first principles using **Self-Balancing Binary Search Trees (Treaps)**, **Doubly Linked Lists**, **Hash Tables**, **Circular Queues (Ring Buffers)**, and **Tries (Prefix Trees)**.
 
-The system simulates a live multi-asset exchange where 8 equity symbols execute continuous two-sided order flow driven by an Ornstein–Uhlenbeck stochastic price process. The backend exposes both an Express REST API and a real-time WebSocket pub/sub stream, powering a responsive glassmorphic web and desktop terminal equipped with canvas-rendered candlestick charts, live Level-2 order books, and real-time mark-to-market portfolio accounting. 
+Meridian provides a **dual-runtime matching engine** implemented with complete architectural parity in both:
+1. **Python 3 (FastAPI + Uvicorn + WebSockets):** Idiomatic, typed Python backend leveraging `__slots__` for high-throughput memory layout and asynchronous concurrency.
+2. **TypeScript / Node.js (Express + ws):** Strongly-typed, event-driven JavaScript engine running on the V8 engine.
 
-By grounding every architectural decision in formal time and space complexity budgets, Meridian proves how theoretical computer science directly solves industrial throughput and latency challenges.
+The system simulates a live multi-asset exchange where 8 equity symbols execute continuous two-sided order flow driven by an Ornstein–Uhlenbeck stochastic price process. The backend exposes both REST API endpoints and a real-time WebSocket pub/sub stream, powering a responsive glassmorphic web and desktop terminal equipped with canvas-rendered candlestick charts, live Level-2 order books, and real-time mark-to-market portfolio accounting. 
+
+By grounding every architectural decision in formal time and space complexity budgets, Meridian proves how theoretical computer science directly solves industrial throughput and latency challenges across both Python and TypeScript runtimes.
 
 ---
 
@@ -59,8 +63,10 @@ Meridian is developed as an advanced academic project and educational demonstrat
 
 ### Software
 - **Operating System:** Windows 10/11, macOS, or Linux
-- **Runtime Environment:** Node.js (v18.0.0 or higher) and npm (v9.0.0 or higher)
-- **Primary Languages:** TypeScript / JavaScript (Node.js backend and React client)
+- **Runtime Environments:**
+  - **Node.js:** v18.0.0 or higher & **npm:** v9.0.0 or higher
+  - **Python:** v3.10 or higher
+- **Primary Languages:** Python 3, TypeScript, Modern JavaScript
 - **Shell / Terminal:** PowerShell, Command Prompt, or Bash
 
 ---
@@ -69,14 +75,16 @@ Meridian is developed as an advanced academic project and educational demonstrat
 
 | Technology | Layer | Purpose |
 |---|---|---|
-| **TypeScript** | Core Engine & Backend | Strongly typed data structure definitions and deterministic matching logic |
-| **Node.js** | Server Runtime | Event-driven runtime for high-throughput asynchronous order processing |
-| **Express** | REST API | Endpoints for account bootstrap, historical candles, order entry, and reset |
-| **ws (WebSockets)** | Real-Time Networking | Low-latency binary/JSON streaming of 250 ms market ticks, trades, and book depth |
-| **React 18 + Vite** | Frontend Terminal | Modular UI component rendering, state orchestration, and high-speed HMR |
+| **Python 3** | Dual Core Engine | Typed Python implementation of Treap, Doubly-LL, CircularQueue, and Trie (`python_server/`) |
+| **FastAPI** | Python REST API | High-performance asynchronous REST endpoints for bootstrap, candles, and orders |
+| **Uvicorn** | ASGI Server | Lightning-fast asynchronous server running the 250 ms live market event loop |
+| **WebSockets (Python & JS)**| Real-Time Networking | Streaming 250 ms market ticks, L2 depth snapshots, and trade executions |
+| **TypeScript** | Dual Core Engine | Strongly typed data structure definitions and matching engine (`server/`) |
+| **Node.js + Express** | TypeScript Backend | Node.js runtime and REST API service |
+| **React 18 + Vite** | Frontend Terminal | High-speed glassmorphic terminal, dynamic state orchestration, and HMR |
 | **HTML5 Canvas API** | Financial Visualization | Dependency-free, GPU-accelerated rendering of 480-candle charts, EMAs, and crosshairs |
-| **Electron** | Desktop Packaging | Native cross-platform container bundling the backend engine and client interface |
-| **tsx** | Testing Pipeline | Zero-config TypeScript execution for acceptance and unit test suites |
+| **Electron** | Desktop Packaging | Native cross-platform container bundling backend services and client interface |
+| **unittest & tsx** | Testing Pipelines | Automated test suites asserting identical DSA invariants in both Python and TypeScript |
 
 ---
 
@@ -132,57 +140,57 @@ This project directly aligns with the syllabus for **Course Code: 24EE05TH0505 �
 ### Unit-I: Linear Data Structures and Applications
 - **Doubly Linked List (`PriceLevel`):**
   - **Syllabus Topic:** *Linked lists, operations, dynamic memory management, complexity analysis.*
-  - **File:** `server/engine.ts` (`PriceLevel`, `OrderNode`)
+  - **Files:** `python_server/engine.py` & `server/engine.ts` (`PriceLevel`, `OrderNode`)
   - **Details:** Each price level maintains a doubly linked list of resting orders with explicit `head`, `tail`, `prev`, and `next` pointers. This structure provides two essential guarantees:
     1. **Strict FIFO Time-Priority:** New orders append to `tail` in $O(1)$; matches execute from `head` in $O(1)$.
     2. **$O(1)$ Arbitrary Cancellation:** When an order is cancelled, calling `lv.unlink(order)` adjusts adjacent pointers in $O(1)$ time without requiring a linear search through the queue.
 - **Circular Queue (`CircularQueue<T>`):**
   - **Syllabus Topic:** *Circular Queue applications, implementation using arrays.*
-  - **File:** `server/engine.ts` (`CircularQueue`)
+  - **Files:** `python_server/engine.py` & `server/engine.ts` (`CircularQueue`)
   - **Details:** Uses a fixed-capacity buffer ($C = 1,000$) with a dynamic `head` pointer and modulo arithmetic `(head + size) % cap`. It stores execution records with constant-time $O(1)$ appending. When capacity is reached, it overwrites the oldest trade seamlessly, eliminating memory leaks and GC latency spikes.
 
 ### Unit-II: Trees and Tree-Based Data Structures
 - **Self-Balancing Binary Search Tree (`PriceTree` Treap):**
   - **Syllabus Topic:** *Binary Search Tree (BST), operations, self-balancing search trees, tree rotations.*
-  - **File:** `server/engine.ts` (`PriceTree`, `TNode`)
+  - **Files:** `python_server/engine.py` & `server/engine.ts` (`PriceTree`, `TNode`)
   - **Details:** A Treap (Cartesian Tree + Heap) combines BST and binary heap properties:
     - **BST Invariant:** Sorted on key $k$ (price in integer cents). For any node, all left descendants have smaller prices and right descendants have larger prices.
     - **Heap Invariant:** Each node is assigned a random priority $p \in [0, 1)$. A parent's priority is always greater than its children's priorities.
     - **Tree Rotations / Rebalancing:** Maintained without complex multi-case rotation code via functional `split(t, k)` and `merge(a, b)` primitives, guaranteeing expected logarithmic height $O(\log P)$ even under adversarial insertion sequences.
 - **Tree Traversals (In-Order Traversal):**
   - **Syllabus Topic:** *Tree traversal techniques: Preorder, Inorder, Postorder.*
-  - **File:** `server/engine.ts` (`PriceTree.top`)
+  - **Files:** `python_server/engine.py` & `server/engine.ts` (`PriceTree.top`)
   - **Details:** Extracts the top $N$ price levels by performing an in-order (for asks, ascending) or reverse in-order (for bids, descending) recursive traversal. This produces a perfectly sorted Level-2 depth ladder in $O(N)$ time, avoiding an $O(N \log N)$ comparison sort.
 
 ### Unit-III: Graph Data Structures and Algorithms
 - **Graph & Tree Traversals (Depth-First Search - DFS):**
   - **Syllabus Topic:** *Graph traversals: Depth First Search (DFS).*
-  - **File:** `server/engine.ts` (`Trie.search`)
+  - **Files:** `python_server/engine.py` & `server/engine.ts` (`Trie.search`)
   - **Details:** After tracing the input prefix path down the Trie, a recursive DFS explores descendant edges in sorted alphabetical order, aggregating up to $K$ candidate symbols for interactive ticker autocomplete.
 - **Network Analysis & Event Distribution:**
-  - **File:** `server/server.ts`
-  - **Details:** Implements a broadcast pub/sub network topology distributing 250 ms tick updates, trade executions, and depth deltas to subscribed client connections.
+  - **Files:** `python_server/server.py` & `server/server.ts`
+  - **Details:** Implements a broadcast pub/sub network topology distributing 250 ms tick updates, trade executions, and depth deltas to subscribed client connections via WebSockets.
 
 ### Unit-IV: Sorting, Searching and Hashing
 - **Hash Tables & Symbol Dictionaries:**
   - **Syllabus Topic:** *Hash tables, collision resolution, symbol tables, dictionary implementation.*
-  - **File:** `server/engine.ts`, `server/portfolio.ts`
+  - **Files:** `python_server/engine.py`, `python_server/portfolio.py` & `server/engine.ts`, `server/portfolio.ts`
   - **Details:**
-    - `Engine.index` (`Map<orderId, OrderNode>`): Global hash index granting $O(1)$ average-time access to any active order across any symbol.
-    - `Engine.books` (`Map<symbol, OrderBook>`): Symbol dictionary routing incoming orders.
-    - `Portfolio.positions` (`Map<symbol, Position>`): Hash map maintaining asset holdings and cost-basis accounting.
+    - `Engine.index` (`dict[str, OrderNode]` in Python / `Map<orderId, OrderNode>` in TS): Global hash index granting $O(1)$ average-time access to any active order across any symbol.
+    - `Engine.books` (`dict` in Python / `Map` in TS): Symbol dictionary routing incoming orders.
+    - `Portfolio.positions` (`dict` in Python / `Map` in TS): Hash map maintaining asset holdings and cost-basis accounting.
 - **Searching & Integer Cent Arithmetic:**
   - Fast $O(\log P)$ BST binary searching in `PriceTree.get(k)`.
-  - Prices are mapped to integer cents (`Math.round(price * 100)`), preventing floating-point hash mismatch and representation hazards.
+  - Prices are mapped to integer cents (`round(price * 100)`), preventing floating-point hash mismatch and representation hazards.
 
 ### Unit-V: Advanced Data Structures & Algorithmic Applications
 - **Trie Data Structure (Prefix Tree):**
   - **Syllabus Topic:** *Trie Data Structure: representation, insertion, searching, applications: auto-complete systems.*
-  - **File:** `server/engine.ts` (`Trie`, `TrieNode`)
+  - **Files:** `python_server/engine.py` & `server/engine.ts` (`Trie`, `TrieNode`)
   - **Details:** A handcrafted trie indexing valid stock tickers. Insertion and search run in $O(K)$ time (where $K$ is string length), delivering instantaneous prefix autocomplete in the search bar.
 - **Data Structure Design Applications:**
   - **Syllabus Topic:** *Selecting appropriate data structures based on time complexity, space requirements, and application constraints.*
-  - **Details:** Rather than relying on a single data structure, Meridian integrates multiple specialized data structures into a cohesive system—pairing Trees with Doubly Linked Lists and Hash Maps to create a high-throughput, low-latency engine.
+  - **Details:** Rather than relying on a single data structure, Meridian integrates multiple specialized data structures into a cohesive system—pairing Trees with Doubly Linked Lists and Hash Maps to create a high-throughput, low-latency engine across both Python and TypeScript runtimes.
 
 ---
 
@@ -196,21 +204,22 @@ This project directly aligns with the syllabus for **Course Code: 24EE05TH0505 �
                                          │  HTTP REST / WebSocket Protocol (/ws)
                                          ▼
 +-----------------------------------------------------------------------------------+
-|                                  SERVER LAYER                                     |
-|                       server/server.ts (Express & ws Server)                      |
+|                           INTERCHANGEABLE SERVER LAYER                            |
+|       Option A: python_server/server.py (FastAPI, Uvicorn & WebSockets)          |
+|       Option B: server/server.ts (Node.js, Express & ws Server)                   |
 +----------------------------------------+------------------------------------------+
                                          │
         ┌────────────────────────────────┼────────────────────────────────┐
         ▼                                ▼                                ▼
 +───────────────────+          +───────────────────+          +───────────────────+
-|   server/market.ts|          |  server/engine.ts |          |server/portfolio.ts|
-|  (Market Simulator|          | (Matching Engine) |          |  (Paper Portfolio)|
+| market.py / .ts   |          | engine.py / .ts   |          |portfolio.py / .ts |
+| (Market Simulator)|          | (Matching Engine) |          | (Paper Portfolio) |
 +─────────┬─────────+          +─────────┬─────────+          +─────────┬─────────+
           │                              │                              │
           │ 250ms Synthetic Ticks        │ Order Match & Cancellations  │ Fills & Reservations
           ▼                              ▼                              ▼
 +───────────────────────────────────────────────────────────────────────────────────+
-|                           HANDCRAFTED DSA CORE (NO LIBS)                          |
+|                     HANDCRAFTED DSA CORE (ZERO EXTERNAL LIBS)                     |
 |                                                                                   |
 |   1. Price Tree Index: Treap (Self-Balancing BST + Heap Rotations)                |
 |   2. Price Level Queue: Doubly Linked List (Strict FIFO Price-Time Priority)      |
@@ -394,10 +403,37 @@ Let:
 
 ## 13. Data Design & State Architecture
 
-### 13.1 In-Memory Entities
+### 13.1 In-Memory Entities (Dual Language Implementation)
 
+#### Python Implementation (`python_server/engine.py` with `__slots__` optimization):
+```python
+class OrderNode:
+    __slots__ = ('id', 'symbol', 'side', 'price', 'qty', 'ts', 'prev', 'next', 'level')
+
+    def __init__(self, order_id: str, symbol: str, side: str, price: int, qty: int, ts: int):
+        self.id = order_id              # Unique identifier (e.g. "O1042")
+        self.symbol = symbol            # Ticker (e.g. "AAPL")
+        self.side = side                # 'B' (Bid) or 'S' (Ask)
+        self.price = price              # Integer cents ($100.50 -> 10050)
+        self.qty = qty                  # Unfilled quantity
+        self.ts = ts                    # Timestamp for FIFO priority
+        self.prev: Optional[OrderNode] = None
+        self.next: Optional[OrderNode] = None
+        self.level: Optional[PriceLevel] = None
+
+class TNode:
+    __slots__ = ('k', 'v', 'p', 'l', 'r')
+
+    def __init__(self, k: int, v: PriceLevel):
+        self.k = k                      # Search Key: Price in integer cents
+        self.v = v                      # Satellite Data: Doubly linked list
+        self.p = random.random()        # Heap Priority in [0, 1)
+        self.l: Optional[TNode] = None  # Left subtree
+        self.r: Optional[TNode] = None  # Right subtree
+```
+
+#### TypeScript Implementation (`server/engine.ts`):
 ```typescript
-// Bidirectional node for O(1) unlinking in PriceLevel FIFO queue
 interface OrderNode {
   id: string;              // Unique order identifier (e.g., "O1042")
   symbol: string;          // Instrument ticker (e.g., "AAPL")
@@ -410,11 +446,10 @@ interface OrderNode {
   level: PriceLevel | null;// Reference to parent price level
 }
 
-// Self-Balancing Treap node
 class TNode {
   k: number;               // Search Key: Price in integer cents
   v: PriceLevel;           // Satellite Data: Doubly linked list of orders
-  p: number;               // Heap Priority: Math.random() in [0, 1)
+  p = Math.random();       // Heap Priority in [0, 1)
   l: TNode | null = null;  // Left child pointer
   r: TNode | null = null;  // Right child pointer
 }
