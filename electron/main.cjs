@@ -1,7 +1,6 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
 
-// Set DIST_DIR for server to locate built UI
 process.env.DIST_DIR = path.join(__dirname, '../dist');
 
 // Start the bundled backend server
@@ -12,6 +11,7 @@ function createWindow() {
     width: 1400,
     height: 900,
     backgroundColor: '#050816',
+    show: true,
     autoHideMenuBar: true,
     webPreferences: {
       nodeIntegration: false,
@@ -21,10 +21,14 @@ function createWindow() {
 
   win.setMenuBarVisibility(false);
 
-  // Short delay to ensure server is listening on port 4000
-  setTimeout(() => {
-    win.loadURL('http://localhost:4000');
-  }, 400);
+  const load = () => {
+    win.loadURL('http://localhost:4000').catch((err) => {
+      console.log('Retrying loadURL...', err.message);
+      setTimeout(load, 500);
+    });
+  };
+
+  load();
 }
 
 app.whenReady().then(createWindow);
