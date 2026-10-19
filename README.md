@@ -430,23 +430,37 @@ Price comparisons, cost basis, cash reservations, and trade settlement are compu
 ## 14. Installation and Execution
 
 ### Prerequisites
-- Node.js (version 18.0.0 or higher)
-- npm (version 9.0.0 or higher)
+- **Node.js:** v18.0.0 or higher & **npm:** v9.0.0 or higher
+- **Python (Optional for Python backend):** v3.10+ (with `fastapi`, `uvicorn`, `websockets`, `pydantic`)
 
 ### Setup & Run Commands
 
+#### Standard TypeScript / Node.js Engine
 ```powershell
-# 1. Clone repository & navigate to root directory
-cd d:\MyProjects\DSA_proj
-
-# 2. Install all dependencies (TypeScript, Vite, React, Express, ws, Electron)
+# 1. Install dependencies
 npm install
 
-# 3. Execute the automated DSA acceptance test suite
+# 2. Run TypeScript DSA acceptance tests (16/16 tests)
 npm test
 
-# 4. Start Full-Stack Development Mode (Backend on :4000, Vite Web UI on :5173)
+# 3. Start full-stack development mode (Express server on :4000 + React UI on :5173)
 npm run dev
+```
+
+#### Python Engine (FastAPI + WebSockets)
+```powershell
+# 1. Install Python dependencies
+pip install -r requirements.txt
+
+# 2. Run Python DSA acceptance tests (16/16 tests)
+npm run python:test
+# or directly with python:
+python -m unittest discover -s python_server/tests -v
+
+# 3. Start full-stack with Python backend (:4000) and React UI (:5173)
+npm run dev:py
+# or launch backend directly:
+python -m uvicorn python_server.server:app --port 4000
 ```
 
 ### Desktop Application Execution
@@ -466,11 +480,14 @@ npm run dist
 
 ## 15. Testing Procedure & Acceptance Verification
 
-Meridian includes a 16-test acceptance suite validating all data structure behaviors, boundary limits, and matching invariants.
+Meridian includes identical 16-test acceptance suites in both TypeScript (`test/`) and Python (`python_server/tests/`), validating all data structure behaviors, boundary limits, and matching invariants.
 
-Run tests using:
 ```powershell
+# Run TypeScript Test Suite:
 npm test
+
+# Run Python Test Suite:
+npm run python:test
 ```
 
 ### 15.1 Unit Tests (`test/engine.test.ts`)
@@ -549,6 +566,14 @@ d:\MyProjects\DSA_proj/
 │   ├── market.ts           # Ornstein-Uhlenbeck stochastic market simulator
 │   ├── portfolio.ts        # Paper account, margin reservations & P&L calculation
 │   └── server.ts           # Express REST API, WebSocket pub/sub & market loop
+├── python_server/
+│   ├── engine.py           # Handcrafted Python DSA: Treap, Doubly-LL, Ring Buffer, Trie
+│   ├── market.py           # Python Ornstein-Uhlenbeck market simulation engine
+│   ├── portfolio.py        # Python paper portfolio manager & margin reservations
+│   ├── server.py           # FastAPI REST API & WebSocket pub/sub server
+│   └── tests/
+│       ├── test_engine.py  # 8 unit tests for Python DSA invariants
+│       └── test_market.py  # 8 unit tests for Python market & portfolio
 ├── src/
 │   ├── App.tsx             # Terminal root, state machine & WebSocket coordination
 │   ├── types.ts            # Shared domain types and protocol schemas
